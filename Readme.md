@@ -283,6 +283,11 @@ Ray wurde auf AI/ML Workloads optimiert. Also heterogene Tasks mit einer niedrig
 RayTune (Hyperparameteroptimierung - was für n Wort), RayTrain (verteiltes ML Training) und RayServe (Model serving) machen Ray zu einer perfekten Plattform für AI Anwendungen. 
 Für reine Datengeschichten ist Spark noch immer deutlich effektiver.
 
+### Notifications
+
+Ray arbeitet mit sogenannten ObjektRefs (Futures) für die Kommunikation. Jede Task gibt sofort einen ObjektRef wieder auf den der Master wartet. Über die verwendung von Actors 
+können Worker direkt miteinander inteagieren - zum Beispiel eine Methode eines anderen Workers aufrufen. Dadurch wird eine Worker to Worker Kommunikation hergestellt.
+
 ## Durchgeführte Arbeitsschritte
 
 
