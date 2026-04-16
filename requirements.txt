@@ -1,0 +1,4 @@
+pyspark
+celery
+redis
+ray
