@@ -288,6 +288,83 @@ Für reine Datengeschichten ist Spark noch immer deutlich effektiver.
 Ray arbeitet mit sogenannten ObjektRefs (Futures) für die Kommunikation. Jede Task gibt sofort einen ObjektRef wieder auf den der Master wartet. Über die verwendung von Actors 
 können Worker direkt miteinander inteagieren - zum Beispiel eine Methode eines anderen Workers aufrufen. Dadurch wird eine Worker to Worker Kommunikation hergestellt.
 
+## Sourcecodeanalyse
+
+Hier implementiere ich für alle 3 Lösungen eine simple Aufgabe - die Primzahlberechnung zwischen 1 und 1000000:
+
+### Spark
+
+```python
+from pyspark import SparkContext, SparkConf
+
+def primes(range_tuple):
+    start, end = range_tuple
+    return [n for n in range(start, end)
+            if n >= 2 and all(n % i != 0
+               for i in range(2, int(n**0.5) + 1))]
+
+conf = SparkConf().setAppName("PrimeCalc")
+sc = SparkContext(conf=conf)
+
+ranges = [(i, i + 100_000) for i in range(0, 1_000_000, 100_000)]
+rdd = sc.parallelize(ranges, numSlices=10)
+all_primes = rdd.flatMap(primes).collect()
+
+print(f"Primes: {len(all_primes)}")
+sc.stop()
+```
+
+### Celery
+
+```python
+from celery import Celery, group
+
+app = Celery('primes',
+             broker='redis://redis-service:6379/0',
+             backend='redis://redis-service:6379/0')
+
+@app.task
+def primes(start, end):
+    return [n for n in range(start, end)
+            if n >= 2 and all(n % i != 0
+               for i in range(2, int(n**0.5) + 1))]
+
+from tasks import find_primes
+
+task_group = group(
+    primes.s(i, i + 100_000)
+    for i in range(0, 1_000_000, 100_000)
+)
+results = task_group.apply_async().get()
+all_primes = [p for sublist in results for p in sublist]
+print(f"Primes: {len(all_primes)}")
+```
+
+### Ray
+
+```python
+import ray
+
+ray.init(address="auto")  
+
+@ray.remote
+def primes(start, end):
+    return [n for n in range(start, end)
+            if n >= 2 and all(n % i != 0
+               for i in range(2, int(n**0.5) + 1))]
+
+futures = [
+    primes.remote(i, i + 100_000)
+    for i in range(0, 1_000_000, 100_000)
+]
+results = ray.get(futures)
+all_primes = [p for sublist in results for p in sublist]
+print(f"Primes: {len(all_primes)}")
+```
+
+Zumindest für mich ist relativ klar, das Ray von der Api her am pythonischten ist. Spark erfordert doch einen relativ hohen Boilerplatecode um auf dasselbe ergebnis zu kommen 
+ist dafür aber auch mit mehr Features ausgestattet. Celery ist am explizitesten und erfordert die klarste Trennung zwischen Task-Definition und Master-Logik.
+
 ## Durchgeführte Arbeitsschritte
 
 
