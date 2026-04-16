@@ -317,17 +317,19 @@ sc.stop()
 ### Celery
 
 ```python
-from celery import Celery, group
+from celery_bench import Celery, group
 
 app = Celery('primes',
              broker='redis://redis-service:6379/0',
              backend='redis://redis-service:6379/0')
 
+
 @app.task
 def primes(start, end):
     return [n for n in range(start, end)
             if n >= 2 and all(n % i != 0
-               for i in range(2, int(n**0.5) + 1))]
+                              for i in range(2, int(n ** 0.5) + 1))]
+
 
 from tasks import find_primes
 
@@ -343,15 +345,17 @@ print(f"Primes: {len(all_primes)}")
 ### Ray
 
 ```python
-import ray
+import ray_bench
 
-ray.init(address="auto")  
+ray.init(address="auto")
+
 
 @ray.remote
 def primes(start, end):
     return [n for n in range(start, end)
             if n >= 2 and all(n % i != 0
-               for i in range(2, int(n**0.5) + 1))]
+                              for i in range(2, int(n ** 0.5) + 1))]
+
 
 futures = [
     primes.remote(i, i + 100_000)
@@ -365,7 +369,22 @@ print(f"Primes: {len(all_primes)}")
 Zumindest für mich ist relativ klar, das Ray von der Api her am pythonischten ist. Spark erfordert doch einen relativ hohen Boilerplatecode um auf dasselbe ergebnis zu kommen 
 ist dafür aber auch mit mehr Features ausgestattet. Celery ist am explizitesten und erfordert die klarste Trennung zwischen Task-Definition und Master-Logik.
 
-## Durchgeführte Arbeitsschritte
+## Benchmarkergebnisse
+
+System     Workers    Zeit (s)     Speedup   
+---------------------------------------------
+Celery     1          1.771        1.00x
+Celery     2          1.042        1.70x
+Celery     4          0.599        2.96x
+Celery     8          0.51         3.47x
+Ray        1          4.908        1.00x
+Ray        2          3.95         1.24x
+Ray        4          3.555        1.38x
+Ray        8          3.457        1.42x
+Spark      1          5.851        1.00x
+Spark      2          2.638        2.22x
+Spark      4          2.44         2.40x
+Spark      8          1.977        2.96x
 
 
 ## Quellen
