@@ -1,5 +1,5 @@
 from pyspark import SparkContext, SparkConf
-from benchmarker import run_benchmark, save_results
+from src.benchmarker import run_benchmark, save_results
 
 
 def is_prime(n):
@@ -20,7 +20,7 @@ def run_spark(num_workers):
 
     sc = SparkContext(conf=conf)
 
-    ranges = [(i, i + 100_000) for i in range(0, 1_000_000, 100_000)]
+    ranges = [(i, i + 1_000_000) for i in range(0, 100_000_000, 1_000_000)]
     rdd = sc.parallelize(ranges, numSlices=num_workers)
     count = rdd.flatMap(find_primes).count()
 
@@ -29,4 +29,4 @@ def run_spark(num_workers):
 
 
 results = run_benchmark("Spark", [1, 2, 4, 8], run_spark)
-save_results(results, "spark_results.csv")
+save_results(results, "spark_100m_results.csv")
