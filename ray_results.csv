@@ -1,0 +1,5 @@
+system,workers,time_seconds,primes_found
+Ray,1,4.908,78498
+Ray,2,3.95,78498
+Ray,4,3.555,78498
+Ray,8,3.457,78498

@@ -1,0 +1,5 @@
+system,workers,time_seconds,primes_found
+Celery,1,1.771,78498
+Celery,2,1.042,78498
+Celery,4,0.599,78498
+Celery,8,0.51,78498

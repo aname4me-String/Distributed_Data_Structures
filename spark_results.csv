@@ -1,0 +1,5 @@
+system,workers,time_seconds,primes_found
+Spark,1,5.851,78498
+Spark,2,2.638,78498
+Spark,4,2.44,78498
+Spark,8,1.977,78498
