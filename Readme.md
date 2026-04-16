@@ -389,9 +389,9 @@ ist dafür aber auch mit mehr Features ausgestattet. Celery ist am explizitesten
 
 ## Quellen
 
-https://docs.celeryq.dev/en/stable/
-https://spark.apache.org
-https://docs.ray.io/en/latest/index.html
-https://redis.io/docs/latest/
-https://docs.aws.amazon.com
-https://docs.cloud.google.com/docs?hl=de
+- https://docs.celeryq.dev/en/stable/
+- https://spark.apache.org
+- https://docs.ray.io/en/latest/index.html
+- https://redis.io/docs/latest/
+- https://docs.aws.amazon.com
+- https://docs.cloud.google.com/docs?hl=de
