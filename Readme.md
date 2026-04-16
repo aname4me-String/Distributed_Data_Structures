@@ -101,7 +101,118 @@ wie bei anderen Systemen. Der Driver beobachtet passiv den Status der Arbeiten �
 
 ## Celery/Redis
 
+Auch Celery arbeitet, wer hätte es gedacht, mit einen "Master" und einen "Worker" - auch wenn diese ein wenig anders funktionieren als bei Spark. So legt der Master (hier der sogenannte Producer)
+eine von ihm erzeugte Task in eine Queu (hier der sogenannte Broker). Die verschiedenen Worker hollen sich aus der Que eine Task für sich hinaus die sie dann bearbeiten. In diesen Fall 
+wird Redis als Broker und Result Store verwendet. Die gesammte Architektur ist deutlich "leichter" als Spark und auf einen Task bassierten betrieb ausgelegt.
 
+### Claud
+
+Genauso wie Spark ist Celery bei den meisten gängigen Cloudanbietern sehr einfach deploybar. Auf AWS kann Celery zum Beispiel über den sogenannten Dienst Amazon ElastiCache for Redis 
+betrieben werden. Dabei handelt es sich um einen verwalteten Redis Cluster der mit vielen Features wie zum Beispiel einen automatischen Failover daherkommt. Die Celery Worker werden 
+als sogenannte ECS (Elastic Container Service) Tasks oder EKS Pods deployed und können automatisch skalliert werden.
+
+Auf Google geht es ähnlich einfach wobei der Cloud Memorystore for Redis als Broker Backend verwendet wird un die Worker Container auf GKE deployed werden (Google Kubernetes Engine). 
+Auf Azure wird der sogenannte Azure Cach for Redis verwendet.
+
+Ein beispielhaftes Deployment mit Kubernetes sieht dann so aus:
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+spec:
+  replicas: 4        
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: worker
+        image: your-registry/celery-app:latest
+        env:
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-service:6379/0"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://redis-service:6379/0"
+        command: ["celery", "-A", "tasks", "worker",
+                  "--concurrency=4", "--loglevel=info"]
+```
+
+Oder ein deployment wo die Worker je nach der Que länge gestartet werden:
+
+```yml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: celery-worker-scaler
+spec:
+  scaleTargetRef:
+    name: celery-worker
+  minReplicaCount: 1
+  maxReplicaCount: 20
+  triggers:
+  - type: redis
+    metadata:
+      address: redis-service:6379
+      listName: celery        
+      listLength: "10"        
+```
+
+Über dieses Setup skaliert der Clouster automatisch. Wenn zum Beispiel ca 100 in der Que stehen können bis zu 10 Worker erstellt werden.
+
+### Programmiersprache
+
+Bei Celery handelt es sich um ein Python Framework. 
+
+### Datenverteilung
+
+Die Tasks werden über Redis vergeben - was einen gemeinsamen "Speicher" damit am nächsten kommt. Für größere Datensätze erhält der Worker meist nur eine Referenz (zB S3) 
+auf die wirklichen Daten die dann direkt asud dem Cloud Storage geladen werden. Redis selbst kann mit größeren Daten nicht umgehen.
+
+### Performance
+
+Celery wurde auf eine große Anzahl von kleinen und unabhängigen Tasks mit niedriger Latenz ausgelegt. Celerys stärken liegen aber in seiner Flexibitität was die Workflow 
+Definitionen angeht und die einfache horizontale Skallirbarkeit. Für datenintensive Berechnungne auf große zusammenhängende Datensätze ist Spark deutlich effektiver.
+
+### Notifications
+
+Im Vergleich zu Ray und Spark bietet Celery hier das größte Notificaitonsystem an. Der Master kann synchron auf Ergebnisse der Worker warten, die eigenen Tasks können Callbacks 
+auslösen und über Signals werden Worker über Ereignisse (Task started, Task Error, etc) informiert. Mit Chord wird zum Beispiel ein Callback ausgelöst wenn alle parallelen Tasks 
+einer Gruppe erfüllt wurden.
 
 ## Ray
 
