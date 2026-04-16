@@ -371,20 +371,20 @@ ist dafür aber auch mit mehr Features ausgestattet. Celery ist am explizitesten
 
 ## Benchmarkergebnisse
 
-System     Workers    Zeit (s)     Speedup   
----------------------------------------------
-Celery     1          1.771        1.00x
-Celery     2          1.042        1.70x
-Celery     4          0.599        2.96x
-Celery     8          0.51         3.47x
-Ray        1          4.908        1.00x
-Ray        2          3.95         1.24x
-Ray        4          3.555        1.38x
-Ray        8          3.457        1.42x
-Spark      1          5.851        1.00x
-Spark      2          2.638        2.22x
-Spark      4          2.44         2.40x
-Spark      8          1.977        2.96x
+| System | Workers | Zeit (s) | Speedup |
+|--------|---------|----------|---------|
+| Celery | 1 | 1.771 | 1.00x |
+| Celery | 2 | 1.042 | 1.70x |
+| Celery | 4 | 0.599 | 2.96x |
+| Celery | 8 | 0.510 | 3.47x |
+| Ray | 1 | 4.908 | 1.00x |
+| Ray | 2 | 3.950 | 1.24x |
+| Ray | 4 | 3.555 | 1.38x |
+| Ray | 8 | 3.457 | 1.42x |
+| Spark | 1 | 5.851 | 1.00x |
+| Spark | 2 | 2.638 | 2.22x |
+| Spark | 4 | 2.440 | 2.40x |
+| Spark | 8 | 1.977 | 2.96x |
 
 
 ## Quellen
