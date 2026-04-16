@@ -216,8 +216,72 @@ einer Gruppe erfüllt wurden.
 
 ## Ray
 
+Bei Ray handelt es sich um ein natives Python Framework für verteilte Systeme welches in erster Linie für KI und Maschinelearningworkflows ausgelegt wurde. Es gibt, oh wunder, 
+auch hier wieder eine "Master" (eine sogenannte Head Note), welcher den globalen Zustand verwaltet, und kleine Worker Nodes welche die Aufgaben ausführen. Die Metadaten werden 
+in einen Global Control Store gespeichert welcher gleichzeitig auch den Cluster koordiniert. Besonders dabei ist aber das Ray zwischen Tasks (zustandslose Funktionen) und 
+Actors (zustandsbehaftete Objekte auf denen ein Worker existiert) unterscheidet.
 
+Ray wurde von Anfang an auf für ein Kubernetes Deployment konzipiert. KubeRay ist der offizielle Kubernetes-Operator für Ray:
 
+```yml
+apiVersion: ray.io/v1alpha1
+kind: RayCluster
+metadata:
+  name: prime-cluster
+spec:
+  rayVersion: '2.9.0'
+  headGroupSpec:
+    rayStartParams:
+      dashboard-host: '0.0.0.0'
+    template:
+      spec:
+        containers:
+        - name: ray-head
+          image: rayproject/ray:2.9.0
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+  workerGroupSpecs:
+  - replicas: 4               
+    minReplicas: 1
+    maxReplicas: 10           
+    rayStartParams: {}
+    template:
+      spec:
+        containers:
+        - name: ray-worker
+          image: rayproject/ray:2.9.0
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+```
+
+Auch hier wurde wieder ein Auto Scalling eingerichtet.
+
+### Cloud
+
+Auch wie die anderen Lösungen lässt sich Ray sehr einfach auf den gängigen Cloudanbietern deployen. Amazon bietet auf AWS über den sogenannten Amazon SageMaker nativen Ray 
+support für Maschinelearning Workflows. Auf Google Cloud läuft Ray auf GKE mit KubeRay, und Vertex AI unterstützt Ray ebenfalls nativ. Auf Azure wird Ray auf AKS mit KubeRay deployt. 
+
+### Programmiersprache
+
+Obwohl Ray ein natives Python Framework ist gibt es auch eine Java SDK.
+
+### Datenverteilung
+
+Für jede Note besitzt Ray einen einzigartigen Objekt Store (zB Apache Plasma) der einen wirklichen gemeinsamen Speicher zwischen Tasks auf derselben Node ermöglicht. Sollte 
+ein Task auf einer anderen Node zugriff auf etwas aus diser Node brauchen wird dies über das Netzwerk übertragen und dort gecached - also ein Distributed Objekt Store.
+
+### Performance
+
+Ray wurde auf AI/ML Workloads optimiert. Also heterogene Tasks mit einer niedrigen Latenz. Über den Shared Object Store ist der Overhead pro Task aufruf minimal. Die Funktionen 
+RayTune (Hyperparameteroptimierung - was für n Wort), RayTrain (verteiltes ML Training) und RayServe (Model serving) machen Ray zu einer perfekten Plattform für AI Anwendungen. 
+Für reine Datengeschichten ist Spark noch immer deutlich effektiver.
 
 ## Durchgeführte Arbeitsschritte
 
